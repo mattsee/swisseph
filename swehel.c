@@ -362,7 +362,7 @@ int32 call_swe_calc(double tjd, int32 ipl, int32 iflag, double *x, char *serr)
 
 /* avoids problems with star name string that may be overwritten by 
    swe_fixstar() */
-int32 call_swe_fixstar(char *star, double tjd, int32 iflag, double *xx, char *serr)
+static int32 call_swe_fixstar(char *star, double tjd, int32 iflag, double *xx, char *serr)
 {
   int32 retval;
   char star2[AS_MAXCH];
@@ -373,7 +373,7 @@ int32 call_swe_fixstar(char *star, double tjd, int32 iflag, double *xx, char *se
 
 /* avoids problems with star name string that may be overwritten by 
    swe_fixstar_mag() */
-int32 call_swe_fixstar_mag(char *star, double *mag, char *serr)
+static int32 call_swe_fixstar_mag(char *star, double *mag, char *serr)
 {
   int32 retval;
   char star2[AS_MAXCH];
@@ -392,7 +392,7 @@ int32 call_swe_fixstar_mag(char *star, double *mag, char *serr)
 
 /* avoids problems with star name string that may be overwritten by 
    swe_fixstar() */
-int32 call_swe_rise_trans(double tjd, int32 ipl, char *star, int32 helflag, int32 eventtype, double *dgeo, double atpress, double attemp, double *tret, char *serr)
+static int32 call_swe_rise_trans(double tjd, int32 ipl, char *star, int32 helflag, int32 eventtype, double *dgeo, double atpress, double attemp, double *tret, char *serr)
 {
   int32 retval;
   int32 iflag = helflag & (SEFLG_JPLEPH|SEFLG_SWIEPH|SEFLG_MOSEPH);

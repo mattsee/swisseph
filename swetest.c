@@ -639,6 +639,7 @@ static void remove_whitespace(char *s);
 #if MSDOS
 static int cut_str_any(char *s, char *cutlist, char *cpos[], int nmax);
 #endif
+static int32 call_swe_fixstar(char *star, double te, int32 iflag, double *x, char *serr);
 
 /* globals shared between main() and print_line() */
 static char *fmt = "PLBRS";
@@ -690,6 +691,7 @@ static int do_set_astro_models = FALSE;
 static char smod[2000];
 static AS_BOOL inut = FALSE; /* for Astrodienst internal feature */
 static AS_BOOL have_gap_parameter = FALSE; 
+static AS_BOOL use_swe_fixstar2 = FALSE; 
 
 #define SP_LUNAR_ECLIPSE	1
 #define SP_SOLAR_ECLIPSE	2
@@ -1010,6 +1012,8 @@ int main(int argc, char *argv[])
       iflag_f = atoi(argv[i]+2);
       if (iflag_f & SEFLG_XYZ)
 	fmt = "PX";
+    } else if (strcmp(argv[i], "-swefixstar2") == 0) {
+      use_swe_fixstar2 = TRUE; 
     } else if (strncmp(argv[i], "-s", 2) == 0) {
       tstep = atof(argv[i]+2);
       if (*(argv[i] + strlen(argv[i]) -1) == 'm')
@@ -1269,11 +1273,11 @@ int main(int argc, char *argv[])
         t = tjd + (istep -1) * tstep / 86400;
       if (step_in_years) {
 	swe_revjul(tjd, gregflag, &jyear, &jmon, &jday, &jut);
-	t = swe_julday(jyear + (istep - 1) * tstep, jmon, jday, jut, gregflag);
+	t = swe_julday(jyear + (istep - 1) * (int) tstep, jmon, jday, jut, gregflag);
       }
       if (step_in_months) {
 	swe_revjul(tjd, gregflag, &jyear, &jmon, &jday, &jut);
-	jmon += (istep - 1) * tstep;
+	jmon += (istep - 1) * (int) tstep;
 	jyear += (int) ((jmon - 1) / 12);
 	jmon = ((jmon - 1) % 12) + 1;
 	t = swe_julday(jyear, jmon, jday, jut, gregflag);
@@ -1440,7 +1444,7 @@ int main(int argc, char *argv[])
 	if (iflag_f >=0)
 	  iflag = iflag_f;
         if (ipl == SE_FIXSTAR) {
-          iflgret = swe_fixstar(star, te, iflag, x, serr);
+          iflgret = call_swe_fixstar(star, te, iflag, x, serr);
 	  /* magnitude, etc. */
 	  if (iflgret != ERR && strpbrk(fmt, "=") != NULL) {
 	    double mag;
@@ -1533,7 +1537,7 @@ int main(int argc, char *argv[])
         if (strpbrk(fmt, "aADdQ") != NULL) {
           iflag2 = iflag | SEFLG_EQUATORIAL;
           if (ipl == SE_FIXSTAR)
-            iflgret = swe_fixstar(star, te, iflag2, xequ, serr);
+            iflgret = call_swe_fixstar(star, te, iflag2, xequ, serr);
           else
             iflgret = swe_calc(te, ipl, iflag2, xequ, serr);
           if (diff_mode) {
@@ -1560,7 +1564,7 @@ int main(int argc, char *argv[])
           /* first, get topocentric equatorial positions */
           iflgt = whicheph | SEFLG_EQUATORIAL | SEFLG_TOPOCTR;
           if (ipl == SE_FIXSTAR)
-            iflgret = swe_fixstar(star, te, iflgt, xt, serr);
+            iflgret = call_swe_fixstar(star, te, iflgt, xt, serr);
           else
             iflgret = swe_calc(te, ipl, iflgt, xt, serr);
           /* to azimuth/height */
@@ -1593,7 +1597,7 @@ int main(int argc, char *argv[])
         if (strpbrk(fmt, "XU") != NULL) {
           iflag2 = iflag | SEFLG_XYZ;
           if (ipl == SE_FIXSTAR)
-            iflgret = swe_fixstar(star, te, iflag2, xcart, serr);
+            iflgret = call_swe_fixstar(star, te, iflag2, xcart, serr);
           else
             iflgret = swe_calc(te, ipl, iflag2, xcart, serr);
           if (diff_mode) {
@@ -1610,7 +1614,7 @@ int main(int argc, char *argv[])
         if (strpbrk(fmt, "xu") != NULL) {
           iflag2 = iflag | SEFLG_XYZ | SEFLG_EQUATORIAL;
           if (ipl == SE_FIXSTAR)
-            iflgret = swe_fixstar(star, te, iflag2, xcartq, serr);
+            iflgret = call_swe_fixstar(star, te, iflag2, xcartq, serr);
           else
             iflgret = swe_calc(te, ipl, iflag2, xcartq, serr);
           if (diff_mode) {
@@ -1753,6 +1757,14 @@ int main(int argc, char *argv[])
   }
   swe_close();
   return  OK;
+}
+
+static int32 call_swe_fixstar(char *star, double te, int32 iflag, double *x, char *serr)
+{
+  if (use_swe_fixstar2) 
+    return swe_fixstar2(star, te, iflag, x, serr);
+  else
+    return swe_fixstar(star, te, iflag, x, serr);
 }
 
 /* This function calculates the geocentric relative distance of a planet,

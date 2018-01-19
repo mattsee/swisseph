@@ -72,6 +72,12 @@
 #include "sweph.h"
 #include "swephlib.h"
 
+#ifdef _MSC_VER
+#define CMP_CALL_CONV __cdecl
+#else
+#define CMP_CALL_CONV
+#endif
+
 #define IS_PLANET 		0
 #define IS_MOON			1
 #define IS_ANY_BODY		2
@@ -5996,16 +6002,19 @@ static int32 save_star_in_struct(int nrecs, struct fixed_star *fstp, char *serr)
 }
 
 /* function for sorting fixed stars with qsort() */
-static int fixedstar_name_compare(const void *star1, const void *star2)
+static int CMP_CALL_CONV fixedstar_name_compare(const void *star1, const void *star2)
 {
-  return strcmp(((const struct fixed_star *)star1)->skey, ((const struct fixed_star *)star2)->skey);
+  const struct fixed_star *fs1 = (const struct fixed_star *) star1;
+  const struct fixed_star *fs2 = (const struct fixed_star *) star2;
+  return strcmp(fs1->skey, fs2->skey);
 }
 
 /* help function for finding a fixed star with bsearch() */
-static int fstar_node_compare(const void *node1, const void *node2)
+static int CMP_CALL_CONV fstar_node_compare(const void *node1, const void *node2)
 {
-  return strcmp(((const struct fixed_star *)node1)->skey,
-                 ((const struct fixed_star *)node2)->skey);
+  const struct fixed_star *n1 = (const struct fixed_star *) node1;
+  const struct fixed_star *n2 = (const struct fixed_star *) node2;
+  return strcmp(n1->skey, n2->skey);
 }
 
 /* function cuts a comma-separated fixed star data record from sefstars.txt 
@@ -6192,7 +6201,7 @@ static int32 load_all_fixed_stars(char *serr)
   swed.n_fixstars_records = nrecs;
   //printf("nstars=%d, nrecords=%d\n", nstars, nrecs);
   (void) qsort ((void *) swed.fixed_stars, (size_t) nrecs, sizeof (struct fixed_star),
-                    (int (*)(const void *,const void *))(fixedstar_name_compare));
+                    (int (CMP_CALL_CONV *)(const void *,const void *))(fixedstar_name_compare));
   return retc;
 }
 
@@ -7382,6 +7391,7 @@ static int32 swi_fixstar_load_record(char *star, char *srecord, char *sname, cha
     if (strlen(serr) + strlen(star) < AS_MAXCH) {
       sprintf(serr, "star %s not found", star);
     }
+    return ERR;
   }
   found:
   strcpy(srecord, s);

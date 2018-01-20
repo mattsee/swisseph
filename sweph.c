@@ -6719,7 +6719,7 @@ int32 CALL_CONV swe_fixstar2_ut(char *star, double tjd_ut, int32 iflag,
   deltat = swe_deltat_ex(tjd_ut, iflag, serr);
   /* if ephe required is not ephe returned, adjust delta t: */
   retflag = swe_fixstar2(star, tjd_ut + deltat, iflag, xx, serr);
-  if ((retflag & SEFLG_EPHMASK) != epheflag) {
+  if (retflag != ERR && (retflag & SEFLG_EPHMASK) != epheflag) {
     deltat = swe_deltat_ex(tjd_ut, retflag, NULL);
     retflag = swe_fixstar2(star, tjd_ut + deltat, iflag, xx, NULL);
   }
@@ -7795,7 +7795,7 @@ int32 CALL_CONV swe_fixstar_ut(char *star, double tjd_ut, int32 iflag,
   deltat = swe_deltat_ex(tjd_ut, iflag, serr);
   /* if ephe required is not ephe returned, adjust delta t: */
   retflag = swe_fixstar(star, tjd_ut + deltat, iflag, xx, serr);
-  if ((retflag & SEFLG_EPHMASK) != epheflag) {
+  if (retflag != ERR && (retflag & SEFLG_EPHMASK) != epheflag) {
     deltat = swe_deltat_ex(tjd_ut, retflag, NULL);
     retflag = swe_fixstar(star, tjd_ut + deltat, iflag, xx, NULL);
   }

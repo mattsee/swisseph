@@ -69,7 +69,7 @@ static char *infocmd0 = "\n\
   With the proper options, swetest can be used to output a printed\n\
   ephemeris and transfer the data into other programs like spreadsheets\n\
   for graphical display.\n\
-  Version: $Header: /users/dieter/sweph/RCS/swetest.c,v 1.78 2010/06/25 07:22:10 dieter Exp $\n\
+  Version:                                                                                   \n\
 \n";
 static char *infocmd1 = "\n\
   Command line options:\n\
@@ -1056,7 +1056,13 @@ int main(int argc, char *argv[])
       || strncmp(argv[i], "-?", 2) == 0) {
       sp = argv[i]+2;
       if (*sp == 'c' || *sp == '\0') {
-        fputs(infocmd0,stdout);
+        char si0[sizeof(infocmd0)+1]; 
+	swe_version(sout);
+	strcpy(si0, infocmd0);
+        sp2 = strstr(si0, "Version:");
+	if (sp2 != NULL && strlen(sp2) > 10 + strlen(sout)) 
+	  strcpy(sp2 + 9, sout);
+        fputs(si0,stdout);
         fputs(infocmd1,stdout);
         fputs(infocmd2,stdout);
         fputs(infocmd3,stdout);

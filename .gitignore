@@ -1,0 +1,10 @@
+# swisseph .gitignore
+
+*.a
+*.o
+*.out
+
+swetest
+test*
+
+# end.

@@ -829,7 +829,7 @@ static double kOZ(double AltS, double sunra, double Lat)
   CHANGEKO = (100 - 11.6 * mymin(6, altslim)) / 100;
 if (0) {
   static int a = 0;
-  //if (a == 0)
+  if (a == 0)
     printf("bsk=%f %f\n", kOZret, AltS);
   a = 1;
 }
@@ -2914,14 +2914,15 @@ static int32 get_heliacal_day(double tjd, double *dgeo, double *datm, double *do
 static int32 time_optimum_visibility(double tjd, double *dgeo, double *datm, double *dobs, char *ObjectName, int32 helflag, double *tret, char *serr)
 {
   int32 retval, retval_sv, i;
-  double t1, t2, vl1, vl2, d, vl, darr[10], phot_scot_opic, phot_scot_opic_sv;
+  double t1, t2, vl1, vl2, d, darr[10], phot_scot_opic, phot_scot_opic_sv;
+  // double vl;
   int t_has_changed;
   *tret = tjd;
   retval = swe_vis_limit_mag(tjd, dgeo, datm, dobs, ObjectName, helflag, darr, serr);
   if (retval == ERR) return ERR;
   retval_sv = retval;
-  vl = darr[0] - darr[7];
-  vl = -1;
+  //vl = darr[0] - darr[7];
+  //vl = -1;
   t1 = tjd;
   t2 = tjd;
   vl1 = -1; 

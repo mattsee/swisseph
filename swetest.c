@@ -2499,9 +2499,9 @@ static void insert_gap_string_for_tabs(char *sout, char *gap)
   }
 }
 
-static void print_rise_set_line(double trise, double tset, double *geopos, char *serr) {
+static int32 print_rise_set_line(double trise, double tset, double *geopos, char *serr) {
   double t0;
-  int retc;
+  int retc = OK;
   *sout = '\0';
   if (trise != 0) retc = ut_to_lmt_lat(trise, geopos, &(trise), serr);
   if (tset != 0) retc = ut_to_lmt_lat(tset, geopos, &(tset), serr);
@@ -2531,6 +2531,7 @@ static void print_rise_set_line(double trise, double tset, double *geopos, char 
   strcat(sout, "\n");
   if (have_gap_parameter) insert_gap_string_for_tabs(sout, gap);
   do_printf(sout);
+  return retc;
 }
 
 static int32 call_rise_set(double t_ut, int32 ipl, char *star, int32 whicheph, double *geopos, char *serr)
@@ -2600,22 +2601,26 @@ static int32 call_rise_set(double t_ut, int32 ipl, char *star, int32 whicheph, d
       trise = 0;	// we hope that exact time 0 never happens, is highly unlikely.
     }
     if (do_rise && do_set) {
-      print_rise_set_line(trise, tset, geopos, serr);
+      rval = print_rise_set_line(trise, tset, geopos, serr);
       last_was_empty = FALSE;
       tnext = tset + dayfrac;
     } else if (do_rise && !do_set) {
-      print_rise_set_line(trise, 0, geopos, serr);
+      rval = print_rise_set_line(trise, 0, geopos, serr);
       last_was_empty = FALSE;
       tnext = trise + dayfrac;
     } else if (do_set && ! do_rise) {
       tnext = tset + dayfrac;
-      print_rise_set_line(0, tset, geopos, serr);
+      rval = print_rise_set_line(0, tset, geopos, serr);
       last_was_empty = FALSE;
     } else { // neither rise nor set 
       // for sequences of days without rise or set, the line '-   -' is printed only once.
-      if (! last_was_empty) print_rise_set_line(0, 0, geopos, serr);
+      if (! last_was_empty) rval = print_rise_set_line(0, 0, geopos, serr);
       tnext += 1;
       last_was_empty = TRUE;
+    }
+    if (rval == ERR) {
+      do_printf(serr);
+      exit(0);
     }
     if (nstep == 1) break;
   }
@@ -2661,7 +2666,7 @@ static int32 call_rise_set(double t_ut, int32 ipl, char *star, int32 whicheph, d
 
 static int32 call_lunar_eclipse(double t_ut, int32 whicheph, int32 special_mode, double *geopos, char *serr)
 {
-  int i, ii, retc, eclflag, ecl_type = 0;
+  int i, ii, retc = OK, eclflag, ecl_type = 0;
   int ihou, imin, isec, isgn;
   double dfrc, attr[30], dt;
   char s1[AS_MAXCH], sout_short[AS_MAXCH], sfmt[AS_MAXCH];
@@ -2710,8 +2715,13 @@ ERR) {
       } 
       if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	for (i = 0; i < 10; i++) {
-	  if (tret[i] != 0)
+	  if (tret[i] != 0) {
 	    retc = ut_to_lmt_lat(tret[i], geopos, &(tret[i]), serr);
+	    if (retc == ERR) {
+	      do_printf(serr);
+	      return ERR;
+	    }
+	  }
 	}
       }
       t_ut = tret[0];
@@ -2802,8 +2812,13 @@ ERR) {
       }
       if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	for (i = 0; i < 10; i++) {
-	  if (tret[i] != 0)
+	  if (tret[i] != 0) {
 	    retc = ut_to_lmt_lat(tret[i], geopos, &(tret[i]), serr);
+	    if (retc == ERR) {
+	      do_printf(serr);
+	      return ERR;
+	    }
+	  }
 	}
       }
       t_ut = tret[0];
@@ -2860,7 +2875,7 @@ ERR) {
 
 static int32 call_solar_eclipse(double t_ut, int32 whicheph, int32 special_mode, double *geopos, char *serr)
 {
-  int i, ii, retc, eclflag, ecl_type = 0;
+  int i, ii, retc = OK, eclflag, ecl_type = 0;
   double dt, tret[30], attr[30], geopos_max[3];
   char s1[AS_MAXCH], s2[AS_MAXCH], sout_short[AS_MAXCH];
   AS_BOOL has_found = FALSE;
@@ -2905,8 +2920,13 @@ attr, direction_flag, serr)) == ERR) {
 	  swe_calc(t_ut + swe_deltat_ex(t_ut, whicheph, serr), SE_ECL_NUT, 0, x, serr);
 	  if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	    for (i = 0; i < 10; i++) {
-	      if (tret[i] != 0)
+	      if (tret[i] != 0) {
 		retc = ut_to_lmt_lat(tret[i], geopos, &(tret[i]), serr);
+		if (retc == ERR) {
+		  do_printf(serr);
+		  return ERR;
+		}
+	      }
 	    }
 	  }
 	  t_ut = tret[0];
@@ -2984,8 +3004,13 @@ attr, direction_flag, serr)) == ERR) {
       swe_sol_eclipse_where(t_ut, whicheph, geopos_max, attr, serr);
       if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	for (i = 0; i < 10; i++) {
-	  if (tret[i] != 0)
+	  if (tret[i] != 0) {
 	    retc = ut_to_lmt_lat(tret[i], geopos, &(tret[i]), serr);
+	    if (retc == ERR) {
+	      do_printf(serr);
+	      return ERR;
+	    }
+	  }
 	}
       }
       swe_revjul(tret[0], gregflag, &jyear, &jmon, &jday, &jut);
@@ -3048,7 +3073,7 @@ attr, direction_flag, serr)) == ERR) {
 
 static int32 call_lunar_occultation(double t_ut, int32 ipl, char *star, int32 whicheph, int32 special_mode, double *geopos, char *serr)
 {
-  int i, ii, ecl_type = 0, eclflag, retc;
+  int i, ii, ecl_type = 0, eclflag, retc = OK;
   double dt, tret[30], attr[30], geopos_max[3];
   char s1[AS_MAXCH], s2[AS_MAXCH];
   AS_BOOL has_found = FALSE;
@@ -3085,8 +3110,13 @@ static int32 call_lunar_occultation(double t_ut, int32 ipl, char *star, int32 wh
         t_ut = tret[0];
 	if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	  for (i = 0; i < 10; i++) {
-	    if (tret[i] != 0)
+	    if (tret[i] != 0) {
 	      retc = ut_to_lmt_lat(tret[i], geopos, &(tret[i]), serr);
+	      if (retc == ERR) {
+		do_printf(serr);
+		return ERR;
+	      }
+	    }
 	  }
 	}
 	has_found = FALSE;
@@ -3196,8 +3226,13 @@ static int32 call_lunar_occultation(double t_ut, int32 ipl, char *star, int32 wh
       } */
       if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	for (i = 0; i < 10; i++) {
-	  if (tret[i] != 0)
+	  if (tret[i] != 0) {
 	    retc = ut_to_lmt_lat(tret[i], geopos, &(tret[i]), serr);
+	    if (retc == ERR) {
+	      do_printf(serr);
+	      return ERR;
+	    }
+	  }
 	}
       }
       swe_revjul(tret[0], gregflag, &jyear, &jmon, &jday, &jut);
@@ -3287,7 +3322,7 @@ static void do_print_heliacal(double *dret, int32 event_type, char *obj_name)
 
 static int32 call_heliacal_event(double t_ut, int32 ipl, char *star, int32 whicheph, double *geopos, double *datm, double *dobs, char *serr)
 {
-  int ii, retc, event_type = 0, retflag;
+  int ii, retc = OK, event_type = 0, retflag;
   double dret[40], tsave1, tsave2 = 0;
   char obj_name[AS_MAXCH];
   helflag |= whicheph;
@@ -3319,8 +3354,12 @@ static int32 call_heliacal_event(double t_ut, int32 ipl, char *star, int32 which
     }
     if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
       retc = ut_to_lmt_lat(dret[0], geopos, &(dret[0]), serr);
-      retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
-      retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+      if (retc != ERR) retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
+      if (retc != ERR) retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+      if (retc == ERR) {
+	do_printf(serr);
+	return ERR;
+      }
     }
     do_print_heliacal(dret, event_type, obj_name);
     /* list all events within synodic cycle */
@@ -3335,8 +3374,12 @@ static int32 call_heliacal_event(double t_ut, int32 ipl, char *star, int32 which
 	}
 	if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	  retc = ut_to_lmt_lat(dret[0], geopos, &(dret[0]), serr);
-	  retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
-	  retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc == ERR) {
+	    do_printf(serr);
+	    return ERR;
+	  }
 	}
 	do_print_heliacal(dret, event_type, obj_name);
 	tsave1 = dret[0];
@@ -3365,8 +3408,12 @@ repeat_mercury:
 	  continue;
 	if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	  retc = ut_to_lmt_lat(dret[0], geopos, &(dret[0]), serr);
-	  retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
-	  retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc == ERR) {
+	    do_printf(serr);
+	    return ERR;
+	  }
 	}
 	do_print_heliacal(dret, event_type, obj_name);
       }
@@ -3380,8 +3427,12 @@ repeat_mercury:
 	}
 	if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	  retc = ut_to_lmt_lat(dret[0], geopos, &(dret[0]), serr);
-	  retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
-	  retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc == ERR) {
+	    do_printf(serr);
+	    return ERR;
+	  }
 	}
 	do_print_heliacal(dret, event_type, obj_name);
       } else {
@@ -3394,8 +3445,12 @@ repeat_mercury:
 	}
 	if (time_flag & (BIT_TIME_LMT | BIT_TIME_LAT)) {
 	  retc = ut_to_lmt_lat(dret[0], geopos, &(dret[0]), serr);
-	  retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
-	  retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[1], geopos, &(dret[1]), serr);
+	  if (retc != ERR) retc = ut_to_lmt_lat(dret[2], geopos, &(dret[2]), serr);
+	  if (retc == ERR) {
+	    do_printf(serr);
+	    return ERR;
+	  }
 	}
 	do_print_heliacal(dret, event_type, obj_name);
 	if (0 && ipl == SE_MERCURY) {

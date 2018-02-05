@@ -1384,7 +1384,7 @@ void load_dpsi_deps(void)
   FILE *fp;
   char s[AS_MAXCH];
   char *cpos[20];
-  int n = 0, np, iyear, mjd = 0, mjdsv = 0;
+  int n = 0, iyear, mjd = 0, mjdsv = 0;
   double dpsi, deps, TJDOFS = 2400000.5;
   if (swed.eop_dpsi_loaded > 0) 
     return;
@@ -1403,7 +1403,7 @@ void load_dpsi_deps(void)
   }
   swed.eop_tjd_beg_horizons = DPSI_DEPS_IAU1980_TJD0_HORIZONS;
   while (fgets(s, AS_MAXCH, fp) != NULL) {
-    np = swi_cutstr(s, " ", cpos, 16);
+    swi_cutstr(s, " ", cpos, 16);
     if ((iyear = atoi(cpos[0])) == 0) 
       continue;
     mjd = atoi(cpos[3]);
@@ -6495,13 +6495,12 @@ if (0) {
  */
 static int32 search_star_in_list(char *sstar, struct fixed_star *stardata, char *serr)
 {
-  int i, cmplen, star_nr = 0, ndata = 0, len;
+  int i, star_nr = 0, ndata = 0, len;
   char *sp;
   char searchkey[AS_MAXCH];
   AS_BOOL is_bayer = FALSE;
   struct fixed_star *stardatap;
   struct fixed_star *stardatabegp;
-  cmplen = strlen(sstar);
   if (*sstar == ',') {
     is_bayer = TRUE;
   } else if (isdigit((int) *sstar)) {
@@ -7719,9 +7718,6 @@ int32 CALL_CONV swe_fixstar(char *star, double tjd, int32 iflag,
   double *xx, char *serr)
 {
   int i;
-  int star_nr = 0;
-  AS_BOOL  is_bayer = FALSE;
-  size_t cmplen;
   char sstar[SE_MAX_STNAME + 1];
   static TLS char slast_stardata[AS_MAXCH];
   static TLS char slast_starname[AS_MAXCH];
@@ -7736,13 +7732,12 @@ int32 CALL_CONV swe_fixstar(char *star, double tjd, int32 iflag,
   retc = fixstar_format_search_name(star, sstar, serr);
   if (retc == ERR)
     goto return_err;
-  cmplen = strlen(sstar);
   if (*sstar == ',') {
-    is_bayer = TRUE;
+    ; // is Bayer designation
   } else if (isdigit((int) *sstar)) {
-    star_nr = atoi(sstar);
+    ; // is a sequential star number
   } else {
-    if ((sp = strchr(sstar, ',')) != NULL)
+    if ((sp = strchr(sstar, ',')) != NULL) // cut off Bayer, if trad. name
       *sp = '\0';
   }
   /* star elements from last call: */
@@ -7815,9 +7810,6 @@ int32 CALL_CONV swe_fixstar_ut(char *star, double tjd_ut, int32 iflag,
 **********************************************************/
 int32 CALL_CONV swe_fixstar_mag(char *star, double *mag, char *serr)
 {
-  int star_nr = 0;
-  AS_BOOL  is_bayer = FALSE;
-  size_t cmplen;
   char sstar[SE_MAX_STNAME + 1];
   static TLS char slast_stardata[AS_MAXCH];
   static TLS char slast_starname[AS_MAXCH];
@@ -7829,13 +7821,12 @@ int32 CALL_CONV swe_fixstar_mag(char *star, double *mag, char *serr)
   retc = fixstar_format_search_name(star, sstar, serr);
   if (retc == ERR)
     goto return_err;
-  cmplen = strlen(sstar);
   if (*sstar == ',') {
-    is_bayer = TRUE;
+    ; // is Bayer designation
   } else if (isdigit((int) *sstar)) {
-    star_nr = atoi(sstar);
+    ; // is a sequential star number
   } else {
-    if ((sp = strchr(sstar, ',')) != NULL)
+    if ((sp = strchr(sstar, ',')) != NULL) // cut off Bayer, if trad. name
       *sp = '\0';
   }
   /* star elements from last call: */
